@@ -11,8 +11,10 @@ double mean_func(double *data, int size)
 	mean += data[i]; 
 	
 	}
-mean /= size;
-return mean;
+	
+	mean /= (double)size;
+
+	return mean;
 }
 
 double sd_func(double *data, double l_mean, int size)
@@ -23,21 +25,42 @@ double sd_func(double *data, double l_mean, int size)
 	for(int i = 0; i < size ; size ++)
 	{
 	
-	sd += (data[i] - l_mean)*(data[i] - l_mean)
+	sd += (data[i] - l_mean)*(data[i] - l_mean);
+
 		
 	}
 
 	
-	sd /= size;
+	sd /= (double)size;
+	
+	sd = sqrt(sd);	
 
-return sd;
+	return sd;
+
 }
 
-double pxy_func(double *X, double *Y, double sdy, double sdx)
+double pxy_func(double *X, double *Y, int size)
 {
 
-	double pxy = 0.0;
+	double meanX = mean_func(X,size);
+ 	double meanY = mean_func(Y, size);
+	double sdx = sd_func(X,meanX,size);
+	double sdy = sd_func(Y,meanY,size);
+		
 
+
+	double pxy = 0.0;
+	
+	for(int i = 0; i <size; i++)
+	{
+ 		
+	  pxy += (X[i] -meanX )*(Y[i] - meanY);
+		
+
+	}
+
+	pxy /= (double)size*(sdx*sdy);
+	
 	return pxy;
 
 }
@@ -49,8 +72,11 @@ void dataInit( double *data, int shift, int size )
 
 	for(int i = 0; i<size; i++)
 	{
-		data[i] = sin(i+shift);
-			
+		
+	data[i] = sin(i+shift);
+				
+	
+	
 	}
 
 
@@ -69,6 +95,7 @@ int main()
 {
 
 
+//free_data(X,Y);
 
 return 1;
 }
