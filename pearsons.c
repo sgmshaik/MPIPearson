@@ -1,11 +1,12 @@
 #include <stdio.h>
 #include <math.h>
 #include <stdlib.h>
+
 double mean_func(double *data, int size)
 {
 
 	double mean = 0.0;
-	for(int i = 0; i < size ; size ++)
+	for(int i = 0; i < size ; i++)
 	{
 		
 	mean += data[i]; 
@@ -14,6 +15,7 @@ double mean_func(double *data, int size)
 	
 	mean /= (double)size;
 
+	
 	return mean;
 }
 
@@ -22,7 +24,7 @@ double sd_func(double *data, double l_mean, int size)
 
 	double sd = 0.0;
 	
-	for(int i = 0; i < size ; size ++)
+	for(int i = 0; i < size ; i ++)
 	{
 	
 	sd += (data[i] - l_mean)*(data[i] - l_mean);
@@ -46,8 +48,7 @@ double pxy_func(double *X, double *Y, int size)
  	double meanY = mean_func(Y, size);
 	double sdx = sd_func(X,meanX,size);
 	double sdy = sd_func(Y,meanY,size);
-		
-
+	
 
 	double pxy = 0.0;
 	
@@ -68,14 +69,12 @@ double pxy_func(double *X, double *Y, int size)
 void dataInit( double *data, int shift, int size )
 {
 
-	data = malloc(sizeof(double)*size);
-
+	
+ 
 	for(int i = 0; i<size; i++)
 	{
 		
 	data[i] = sin(i+shift);
-				
-	
 	
 	}
 
@@ -83,19 +82,26 @@ void dataInit( double *data, int shift, int size )
 
 }
 
-void free_data(double *X, double *Y)
-{
-
-	free(X);
-	free(Y);
-
-}
 
 int main()
 {
+	
+
+	double *X;
+	double *Y;
+	int size  = 2*pow(10,6);
+    int shift = 5;
+	
+	X = (double *)malloc(size*sizeof(double));
+	Y = (double *)malloc(size*sizeof(double));
+	dataInit(X,0,size);	
+	dataInit(Y,5,size);
+
+	double pxy = pxy_func(X,Y,size);
+	printf("This is pxy : %lf \n" , pxy);
 
 
-//free_data(X,Y);
-
+free(X);
+free(Y);
 return 1;
 }
