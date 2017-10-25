@@ -46,10 +46,11 @@ double pxy_func(double *X, double *Y, int size)
 
 	double meanX = mean_func(X,size);
  	double meanY = mean_func(Y, size);
+	
 	double sdx = sd_func(X,meanX,size);
 	double sdy = sd_func(Y,meanY,size);
 	
-
+	printf("This is the mean : %.20lf \n" , meanY);
 	double pxy = 0.0;
 	
 	for(int i = 0; i <size; i++)
@@ -97,6 +98,7 @@ int main()
 	dataInit(X,0,size);	
 	dataInit(Y,5,size);
 
+	
 	double pxy = pxy_func(X,Y,size);
 	printf("This is pxy : %lf \n" , pxy);
 
