@@ -1,6 +1,7 @@
 
 #include <stdio.h>
 #include <math.h>
+#include <stdlib.h>
 #include "mpi.h"
 
 double mean_func(double *data, int size)
@@ -82,29 +83,79 @@ int main(void)
 {
 	
 
-	int numtasks, rank, sendcount, recvcount;
+    int numtasks, rank, sendcount, recvcount;
     MPI_Init(NULL,NULL);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &numtasks);
     
-    int size  = 10;
+    int size  = 100;
     int shift = 5;
-    sendcount = size/(double)numtasks;
-    double *X= NULL;
-   
-    if(rank==0)
+    sendcount = size/numtasks;
+    
+        printf("   size =  %d , sendcount =  %d   ", sendcount, numtasks );
+        double *rec_buff = (double *)malloc(sendcount*sizeof(double));
+    
+        double *sub_avgs = (double *) malloc(sizeof(double)*numtasks );
+
+    
+        double *X; 
+
+	X = (double *)malloc(size*sizeof(double));
+	double meanx;    
+if(rank==0)
     {
-       
-        X = (double *)malloc(size*sizeof(double));
         dataInit(X,shift,size);
-        MPi_Scatter(X,sendcount,MPI_DOUBLE,)
+	
+//	 printf("X init array, rank = %d , X = %p \n ", rank, &X   );
+
+	 
+	double meanrank0 = mean_func(X,size); 
+	printf("this is the is serial mean  %lf \n", meanrank0);  
+        MPI_Scatter(X,sendcount,MPI_DOUBLE,rec_buff,sendcount, MPI_DOUBLE,0,MPI_COMM_WORLD);
+
+  
+//
+        meanx = mean_func(rec_buff,sendcount);
+  	MPI_Gather(&meanx,1,MPI_DOUBLE,sub_avgs,1,MPI_DOUBLE,0,MPI_COMM_WORLD);
+           
+	double finalmean = mean_func(sub_avgs, numtasks);
+     
+        printf (" parrallel mean %lf ", finalmean);
+	}else if (rank != 0)
+
+      {
+    
+   
+
+
+        MPI_Scatter(X,sendcount,MPI_DOUBLE,rec_buff,sendcount, MPI_DOUBLE,0,MPI_COMM_WORLD);
+        
+//	 printf("X init array, rank = %d , X = %p \n ", rank, &X   );
+
+        meanx = mean_func(rec_buff,sendcount);
+
+   
+
+   /* for( int i = 0; i < sendcount; i++)
+	{
+		printf(" testing scatter rank = %d, i = %d,  rec_buf = %lf \n " ,rank,i,rec_buff[i]);
+
+
+	}
+  // printf (" rank =  %d , meanx = %lf  \n " , rank , meanx  ); 
+    
+    */
+
+    MPI_Gather(&meanx,1,MPI_DOUBLE,sub_avgs,1,MPI_DOUBLE,0,MPI_COMM_WORLD);
+  
+    
+        
+   
 
 
     }
-    
-
-
-   /* double *X;
+   
+    /* double *X;
 	double *Y;
     X = (double *)malloc(size*sizeof(double));
 	Y = (double *)malloc(size*sizeof(double));
@@ -113,12 +164,12 @@ int main(void)
 */
 
 
-
+	free(X);
+	free(sub_avgs);
+	free(rec_buff);
 	//double pxy = pxy_func(X,Y,size);
+
 	//printf("This is pxy : %lf \n" , pxy);
-
-
-//free(X);
-//free(Y);
+MPI_Finalize();
 return 0;
 }
