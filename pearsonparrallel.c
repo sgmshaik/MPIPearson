@@ -2,9 +2,11 @@
 #include <math.h>
 #include <stdlib.h>
 #include "mpi.h"
-#define SIZE 2000000
+#define SIZE 240000000
 
-double mean_func(double *data, int size)
+
+
+ double mean_func(double *data, int size)
 {
 
 	double mean = 0.0;
@@ -21,7 +23,7 @@ double mean_func(double *data, int size)
 	return mean;
 }
 
-double sd_func(double *data, double l_mean, int size)
+ double sd_func(double *data, double l_mean, int size)
 {
 
 	double sd = 0.0;
@@ -40,7 +42,7 @@ double sd_func(double *data, double l_mean, int size)
 
 }
 
-double pxy_func(double *X, double *Y, int size, double meanX, double meanY)
+ double pxy_func(double *X, double *Y, int size, double meanX, double meanY)
 {
 
 	double pxy = 0.0;
@@ -58,7 +60,7 @@ double pxy_func(double *X, double *Y, int size, double meanX, double meanY)
 	return pxy;
 
 }
-void dataInit( double *data, int shift, int size )
+ void dataInit( double *data, int shift, int size )
 {
 
 	
@@ -73,18 +75,25 @@ void dataInit( double *data, int shift, int size )
 
 }
 
-int main(void)
+int main()
 {
 	
 
     int numtasks, rank, sendcount_int, recvcount;
-    MPI_Init(NULL,NULL);
+    MPI_Init(NULL, NULL);
+    /*if(argc == 1)
+	{
+		
+	} */  
+    
+
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &numtasks);
 	
+	
 	sendcount_int = SIZE/numtasks ; // partitions for the buffer add 1 to take in to account possible remainder .
     //printf(" HELLO %d \n", sendcount);
-	double *X = NULL;
+        double *X = NULL;
 	double *Y = NULL;
 	int *sendcounts;
 	int *displs;
@@ -112,13 +121,14 @@ int main(void)
 	double global_pXY = 0.0;
  
 	
-    X = (double *)malloc(SIZE*sizeof(double));
-	Y = (double *)malloc(SIZE*sizeof(double));
 
 	for(int i =0; i<numtasks;i++) // this calculates the remainder cycles around and add remainder to the cores until no rem left . 
 	{
 		
-			sendcounts[i] = sendcount_int;
+		
+			
+		
+		sendcounts[i] = sendcount_int;
 
 		if(rem>0)
 		{
@@ -134,13 +144,22 @@ int main(void)
 	double *rec_buffx = (double *)malloc((sendcounts[rank]*sizeof(double))); //recieve_buff sent to all processes ;
 	// + 1 to take into account of possible remainder SIZE % numtasks from sccatterv
 	double *rec_buffy = (double *)malloc((sendcounts[rank]*sizeof(double)));
-	
+
+
+	double start, finish, loc_elapsed, elapsed ;
 	if(rank==0)
 	{
 
+	
+	
+        X = (double *)malloc(SIZE*sizeof(double));
+	
+	Y = (double *)malloc(SIZE*sizeof(double));
+	
 	 dataInit(X,0,SIZE);
 	 dataInit(Y,5,SIZE);
 	 
+	start = MPI_Wtime(); // start timing after init to keep consistency with the serial
 	 
 
 
@@ -178,7 +197,7 @@ int main(void)
 	
 
 	}
-	else if(rank !=0)
+	else
 	{
 		MPI_Scatterv(X, sendcounts, displs, MPI_DOUBLE, rec_buffx, sendcounts[rank], MPI_DOUBLE, 0, MPI_COMM_WORLD);
 		MPI_Scatterv(Y, sendcounts, displs, MPI_DOUBLE, rec_buffy, sendcounts[rank], MPI_DOUBLE, 0, MPI_COMM_WORLD);
@@ -227,27 +246,43 @@ int main(void)
 	}
 
 	
+	
+	
+	
+	MPI_Reduce(&local_sdX,&global_sdX,1,MPI_DOUBLE,MPI_SUM,0,MPI_COMM_WORLD);
+	
 	if(rank==0)
 	{
-	//MPI_Reduce(&local_sdX,&global_sdX,1,MPI_DOUBLE,MPI_SUM,0,MPI_COMM_WORLD);
 		
 	//MPI_Reduce(&local_sdY,&global_sdY,1,MPI_DOUBLE,MPI_SUM,0,MPI_COMM_WORLD);
 	//MPI_Reduce(&local_pXY,&global_pXY,1,MPI_DOUBLE,MPI_SUM,0,MPI_COMM_WORLD);
 		
+            
+	   	
+	   
+	    global_pXY = global_pXY/sqrt(global_sdX*global_sdY);
+	   finish = MPI_Wtime();
+	   printf("this is the time %.10f \n ", finish-start);
 
-	   double global_sum = global_pXY/sqrt(global_sdX*global_sdY);
-		printf("this is global sum :  %.10lf , at rank %d , \n" ,global_sum , rank  );
+	   printf("this is global sum :  %.10lf , at rank %d , \n" ,global_pXY , rank  );
+
 		
+	  // File *infile;
+	   //infile = fopen(char *str, "w");
+
+
+
+	free(Y);
+
+	free(X);
 	}
 	//printf("this is global sum :  %.20lf , at rank %d , \n" , global_meanX/(numtasks*SIZE), rank  );
-
+        
 	free(rec_buffx);
 	free(rec_buffy);
 	
 	free(sendcounts);
 	free(displs);
-	free(X);
-	free(Y);
 	
 	MPI_Finalize();
 }
