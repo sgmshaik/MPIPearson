@@ -2,7 +2,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include "mpi.h"
-#define SIZE 2000
+#define SIZE 2000000
 
 double mean_func(double *data, int size)
 {
@@ -83,7 +83,7 @@ int main(void)
     MPI_Comm_size(MPI_COMM_WORLD, &numtasks);
 	
 	sendcount = SIZE/numtasks + 1 ; // partitions for the buffer add 1 to take in to account possible remainder .
-	printf(" HELLO %d /n", sendcount);
+    //printf(" HELLO %d \n", sendcount);
 	double *X = NULL;
 	double *Y = NULL;
 	int *sendcounts;
@@ -95,30 +95,40 @@ int main(void)
 	int sum =0; //distance from start of sendbuff = X 
 	
 	 int rem = SIZE % numtasks; //remainder 
-	 for(int i =0; i<numtasks;i++) // this calculates the remainder cycles around and add remainder to the cores until no rem left . 
-	 {
-		 
-			 sendcounts[i] = sendcount;
+	//printf(" ... rem  %d \n" ,rem);
+	
+	double local_meanX =0.0;
+	double global_meanX = 0.0;
+	double global_meanY = 0.0;
+	double local_meanY =0.0;
+	 
  
-		 if(rem>0)
-		 {
-			 sendcounts[i]++;
-			 rem--;
-		 }
-		displs[i] = sum;
-		sum += sendcounts[i];
- 
-	 }
- 
+    X = (double *)malloc(SIZE*sizeof(double));
+	Y = (double *)malloc(SIZE*sizeof(double));
+
+	for(int i =0; i<numtasks;i++) // this calculates the remainder cycles around and add remainder to the cores until no rem left . 
+	{
+		
+			sendcounts[i] = sendcount;
+
+		if(rem>0)
+		{
+			sendcounts[i]++;
+			rem--;
+		}
+	   displs[i] = sum;
+	   sum += sendcounts[i];
+
+	   //printf(" int i : %d ,  sendcounts  :  %d ,  displacement %d :  \n ", i ,  sendcounts[i], displs[i]);
+	}
 
 
 	if(rank==0)
 	{
 
-     X = (double *)malloc(SIZE*sizeof(double));
-	 Y = (double *)malloc(SIZE*sizeof(double));
+     
 	 
-
+	
 	 
 	 dataInit(X,0,SIZE);
 	 dataInit(Y,5,SIZE);
@@ -127,18 +137,43 @@ int main(void)
 
 
 	 MPI_Scatterv(X, sendcounts, displs, MPI_DOUBLE, rec_buffx, SIZE, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-	 //MPI_Scatterv(Y, sendcounts, displs, MPI_DOUBLE, rec_buffy, SIZE, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+	 MPI_Scatterv(Y, sendcounts, displs, MPI_DOUBLE, rec_buffy, SIZE, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 	 
+	  local_meanX = mean_func( rec_buffx , sendcounts[rank]);
+	  local_meanY = mean_func( rec_buffy , sendcounts[rank]);
 	 
-	 
-	 free(X);
-	 free(Y);
+	  MPI_Allreduce(&local_meanX,&global_meanX,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+
+	  MPI_Allreduce(&local_meanY,&global_meanY,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+
+	  printf("this is globalX sum :  %lf , at rank %d ,\n " , global_meanX, rank  );
+	  printf("this is globalY sum :  %lf , at rank %d , \n" , global_meanY, rank  );
+	  
 
 	}
 	else
 	{
-	  
-	 
+		MPI_Scatterv(X, sendcounts, displs, MPI_DOUBLE, rec_buffx, SIZE, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+		MPI_Scatterv(Y, sendcounts, displs, MPI_DOUBLE, rec_buffy, SIZE, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+		
+	   /*if(rank == 2)
+		{
+			//printf("SENDC2 = %d  \n ",sendcounts[2] );
+			for(int i = 0; i < sendcounts[2]; i++)
+			{
+			//printf(" int i :  %d  ,   rec_buffx  : %.20lf  \n " , i , rec_buffx[i] );
+			}
+		}*/
+
+		local_meanX = mean_func( rec_buffx , sendcounts[rank]);
+		local_meanY = mean_func( rec_buffy , sendcounts[rank]);
+	   
+		MPI_Allreduce(&local_meanX,&global_meanX,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+
+		MPI_Allreduce(&local_meanY,&global_meanY,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+		printf("this is globalX sum :  %lf , at rank %d , \n" , global_meanX, rank  );
+		printf("this is globalY sum :  %lf , at rank %d , \n " , global_meanY, rank  );
+		
 	}
 
 	free(rec_buffx);
