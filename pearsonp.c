@@ -88,24 +88,20 @@ int main(void)
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &numtasks);
     
-    int size  = 100;
+    int size  = 2000000;
     int shift = 5;
 	
 	sendcount = size/numtasks;
 	int *sendcounts ;
 	int *displs; // 0
        // printf("   size =  %d , sendcount =  %d   ", sendcount, numtasks );
-        double *rec_buff = (double *)malloc(sendcount*sizeof(double));
-    
-        double *sub_avgs = (double *)malloc(sizeof(double)*numtasks );
-
+       
     
         double *X; 
 
 	double meanx;    
-if(rank==0)
-    {
-    sendcounts = (int *)malloc(numtasks*sizeof(int)); //data sent to each processor (remainder will be different)     
+    
+	sendcounts = (int *)malloc(numtasks*sizeof(int)); //data sent to each processor (remainder will be different)     
 	displs = (int *)malloc(numtasks*sizeof(int));
     int sum =0; //distance from start of sendbuff = X 
 	int rem = size%numtasks; //remainder 
@@ -124,6 +120,16 @@ if(rank==0)
 
 	}
 
+	double *rec_buff = (double *)malloc(sendcounts[rank]*sizeof(double));
+    
+    double *sub_avgs = (double *)malloc(sizeof(double)*numtasks );
+
+	if(rank==0)
+    {
+    
+
+	
+
 	X = (double *)malloc(size*sizeof(double));
 	dataInit(X,shift,size);
 	
@@ -131,9 +137,9 @@ if(rank==0)
 
 	 
 	double meanrank0 = mean_func(X,size); 
-	printf("this is the is serial mean  %lf \n", meanrank0);  
+	printf("this is the is serial mean  %.20lf \n", meanrank0);  
 		//MPI_Scatter(X,sendcount,MPI_DOUBLE,rec_buff,sendcount, MPI_DOUBLE,0,MPI_COMM_WORLD);
-		MPI_Scatterv(X, sendcounts, displs, MPI_DOUBLE, rec_buff, size, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+		MPI_Scatterv(X, sendcounts, displs, MPI_DOUBLE, rec_buff, sendcounts[rank], MPI_DOUBLE, 0, MPI_COMM_WORLD);
   
 //
         meanx = mean_func(rec_buff,sendcounts[0]);
@@ -141,7 +147,7 @@ if(rank==0)
     	       
 	double finalmean = mean_func(sub_avgs, numtasks);
      
-        printf (" parrallel mean %lf \n ", finalmean);
+        printf (" parrallel mean %.20lf \n ", finalmean);
 	
  	free(X);
 	}else if (rank != 0)
@@ -149,13 +155,15 @@ if(rank==0)
       {
     
    
-
+		double *rec_buff = (double *)malloc(sendcounts[rank]*sizeof(double));
+		
+		double *sub_avgs = (double *)malloc(sizeof(double)*numtasks );
 
     //    MPI_Scatter(X,sendcount,MPI_DOUBLE,rec_buff,sendcount, MPI_DOUBLE,0,MPI_COMM_WORLD);
-        MPI_Scatterv(X, sendcounts, displs, MPI_DOUBLE, rec_buff, size, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+        MPI_Scatterv(X, sendcounts, displs, MPI_DOUBLE, rec_buff, sendcounts[rank], MPI_DOUBLE, 0, MPI_COMM_WORLD);
 //	 printf("X init array, rank = %d , X = %p \n ", rank, &X   );
 
-        meanx = mean_func(rec_buff,sendcount);
+        meanx = mean_func(rec_buff,sendcounts[rank]);
 
    
 
