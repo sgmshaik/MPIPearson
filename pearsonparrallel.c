@@ -2,8 +2,8 @@
 #include <math.h>
 #include <stdlib.h>
 #include "mpi.h"
-#define SIZE 240000000
-
+//#define SIZE 240000000 going to define it from argv
+int SIZE;
 
 
  double mean_func(double *data, int size)
@@ -75,13 +75,16 @@
 
 }
 
-int main()
+
+int main(int argc, char *argv[])
 {
 	
 
     int numtasks, rank, sendcount_int, recvcount;
     MPI_Init(NULL, NULL);
-    /*if(argc == 1)
+    SIZE = atoi(argv[1]); // converts char[0] to SIZE is a global variable .
+    //printf("SIZE : %d \n ", SIZE);
+	/*if(argc == 1)
 	{
 		
 	} */  
@@ -93,7 +96,7 @@ int main()
 	
 	sendcount_int = SIZE/numtasks ; // partitions for the buffer add 1 to take in to account possible remainder .
     //printf(" HELLO %d \n", sendcount);
-        double *X = NULL;
+    double *X = NULL;
 	double *Y = NULL;
 	int *sendcounts;
 	int *displs;
@@ -152,7 +155,7 @@ int main()
 
 	
 	
-        X = (double *)malloc(SIZE*sizeof(double));
+    X = (double *)malloc(SIZE*sizeof(double));
 	
 	Y = (double *)malloc(SIZE*sizeof(double));
 	
@@ -262,16 +265,30 @@ int main()
 	   
 	    global_pXY = global_pXY/sqrt(global_sdX*global_sdY);
 	   finish = MPI_Wtime();
-	   printf("this is the time %.10f \n ", finish-start);
+	  // printf("this is the time %.10f \n ", finish-start);
 
-	   printf("this is global sum :  %.10lf , at rank %d , \n" ,global_pXY , rank  );
+	  // printf("this is global sum :  %.10lf , at rank %d , for SIZE %d , and number of processes %d \n" ,global_pXY , rank , SIZE, numtasks );
 
 		
-	  // File *infile;
-	   //infile = fopen(char *str, "w");
+		//File *infile;
+		  //char filename[100];
+		 //sprintf(filename,"p_res",numtasks,SIZE,finish-start);
+	     // infile = fopen(filename, "a");
 
+		 
+		 //sprintf(line, " -----------N------------SIZE---------------TIME");
+		 FILE *infile;
+		 
+		 infile = fopen("p_res.dat","a");
 
-
+		 if(infile != NULL)
+		 {
+			//c1 number of processes, c2 size of array , c2 time		
+			fprintf(infile, "%10d		%10d		%20lf \n", numtasks ,SIZE,(finish-start) );
+            
+			fclose(infile);
+		    
+		}else{printf(" ERROR \n");}
 	free(Y);
 
 	free(X);
@@ -285,4 +302,5 @@ int main()
 	free(displs);
 	
 	MPI_Finalize();
+return 0;
 }

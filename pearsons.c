@@ -84,14 +84,15 @@ void dataInit( double *data, int shift, int size )
 }
 
 
-int main()
+int main(int argc, char *argv[])
 {
 	
 
 	double *X;
 	double *Y;
-	int size  = 2.4*pow(10,8);
-    int shift = 5;
+	int size  = atoi(argv[1]);
+	//printf("size %d  : \n", size);
+	int shift = 5;
 	
 	X = (double *)malloc(size*sizeof(double));
 	Y = (double *)malloc(size*sizeof(double));
@@ -107,8 +108,20 @@ int main()
 	double pxy = pxy_func(X,Y,size);
 	finish = clock();	
 	double elapsedt = (double)(finish - start)/ CLOCKS_PER_SEC; 
-	printf("This is pxy : %lf and the time is : %lf  \n" , pxy, elapsedt);
+	//printf("This is pxy : %lf and the time is : %lf  \n" , pxy, elapsedt);
 
+	FILE *infile;
+	
+	infile = fopen("s_res.dat","a");
+
+	if(infile != NULL)
+	{
+	   //c1 number of processes, c2 size of array , c2 time		
+	   fprintf(infile, "%10d		%10d		%20lf \n", 1 ,size,elapsedt );
+	   
+	   fclose(infile);
+	   
+   }else{printf(" ERROR \n");}
 
 free(X);
 free(Y);
