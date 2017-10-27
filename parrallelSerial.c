@@ -76,6 +76,46 @@ int SIZE;
 
 
 }
+ void fileArraySize(int N,int size, double elapsedt) // for creating TvS N is the number of Threads used
+ {
+
+FILE *infile;
+	
+	char rname [100];
+	sprintf(rname,"ThreadN.%d" , N);
+	infile = fopen(rname,"a");
+	
+
+	if(infile != NULL)
+	{
+	   fprintf(infile, "%10d		%20lf \n",size,elapsedt );
+	   
+	   fclose(infile);
+	   
+   }else{printf(" ERROR \n");}
+
+ }
+
+ void fileThreads(int N,int size, double elapsedt) // for the TvN argument takes size for different array sizes
+  {
+
+	FILE *infile;
+	
+	char rname [100];
+	sprintf(rname,"size.%d" , size);
+	infile = fopen(rname,"a");
+	
+
+	if(infile != NULL)
+	{
+	   
+	   fprintf(infile, "%20lf		%20d \n",elapsedt, N );
+	   
+	   fclose(infile);
+	   
+   }else{printf(" ERROR \n");}
+ 
+}
 
 
 double pxy_serial()
@@ -94,9 +134,9 @@ double pxy_serial()
 	dataInit(Y,5,size);
 
 
-	clock_t start, finish;
+	double start, finish;
 	
-	start = clock();
+	start = MPI_Wtime();
 
 	double meanX = mean_func(X,size);
 	double meanY = mean_func(Y,size);
@@ -104,22 +144,11 @@ double pxy_serial()
 	double global_sdY= sd_func(Y,meanY,size);
 	
 	double pxy = pxy_func(X,Y,size,meanX,meanY)/(sqrt(global_sdX*global_sdY));
-	finish = clock();	
-	double elapsedt = (double)(finish - start)/ CLOCKS_PER_SEC; 
-	printf("This is serial pxy : %lf and the time is : %lf  \n" , pxy, elapsedt);
+	finish = MPI_Wtime();	
+	double elapsedt = (finish - start); 
+	//printf("This is serial pxy : %lf and the time is : %lf  \n" , pxy, elapsedt);
 
-	/*FILE *infile;
 	
-	infile = fopen("s_res.dat","a");
-
-	if(infile != NULL)
-	{
-	   //c1 number of processes, c2 size of array , c2 time		
-	   fprintf(infile, "%10d		%10d		%20lf \n", 1 ,size,elapsedt );
-	   
-	   fclose(infile);
-	   
-   }else{printf(" ERROR \n");}*/
 free(X);
 free(Y);
 return elapsedt;
@@ -302,9 +331,9 @@ double pxy_mpi(int numtasks, int rank, int sendcount_int,int recvcount)
 	    global_pXY = global_pXY/sqrt(global_sdX*global_sdY);
 	   finish = MPI_Wtime();
 	    elapsedt = finish-start; 
-	   printf("this is the time %.10f \n ", elapsedt);
+	  // printf("this is the time %.10f \n ", elapsedt);
 
-	   printf("this is globalpxy :  %.10lf , at rank %d , for SIZE %d , and number of processes %d \n" ,global_pXY , rank , SIZE, numtasks );
+	 //  printf("this is globalpxy :  %.10lf , at rank %d , for SIZE %d , and number of processes %d \n" ,global_pXY , rank , SIZE, numtasks );
 
 		
 		//File *infile;
