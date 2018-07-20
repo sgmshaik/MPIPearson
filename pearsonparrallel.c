@@ -83,11 +83,6 @@ int main(int argc, char *argv[])
     int numtasks, rank, sendcount_int, recvcount;
     MPI_Init(NULL, NULL);
     SIZE = atoi(argv[1]); // converts char[0] to SIZE is a global variable .
-    //printf("SIZE : %d \n ", SIZE);
-	/*if(argc == 1)
-	{
-		
-	} */  
     
 
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -141,7 +136,7 @@ int main(int argc, char *argv[])
 	   displs[i] = sum;
 	   sum += sendcounts[i];
 
-	 //printf(" int i : %d ,  sendcounts  :  %d ,  displacement %d :  \n ", i ,  sendcounts[i], displs[i]);
+	
 	}
 
 	double *rec_buffx = (double *)malloc((sendcounts[rank]*sizeof(double))); //recieve_buff sent to all processes ;
@@ -170,8 +165,6 @@ int main(int argc, char *argv[])
 	MPI_Scatterv(Y, sendcounts, displs, MPI_DOUBLE, rec_buffy, sendcounts[rank], MPI_DOUBLE, 0, MPI_COMM_WORLD);
 	 
 
-	 //MPI_Scatter(X, sendcount, MPI_DOUBLE, rec_buffx, sendcount, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-	 //MPI_Scatter(Y, sendcount, MPI_DOUBLE, rec_buffy, sendcount, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 	  local_meanX = mean_func( rec_buffx , sendcounts[rank]);
 	  local_meanY = mean_func( rec_buffy , sendcounts[rank]);
 	
@@ -188,8 +181,7 @@ int main(int argc, char *argv[])
 	  
 	  MPI_Reduce(&local_sdY,&global_sdY,1,MPI_DOUBLE,MPI_SUM,0,MPI_COMM_WORLD);
 	  //-----------------------------------------------------
-	 // printf("this is globalmX sum :  %.20lf , at rank %d ,\n " , global_meanX, rank  );
-	//  printf("this is globalmY sum :  %lf , at rank %d , \n" , global_meanY, rank  );
+	
 	  
 	local_pXY = pxy_func(rec_buffx, rec_buffy, sendcounts[rank], global_meanX, global_meanY);
 	MPI_Reduce(&local_pXY,&global_pXY,1,MPI_DOUBLE,MPI_SUM,0,MPI_COMM_WORLD);
@@ -204,17 +196,7 @@ int main(int argc, char *argv[])
 	{
 		MPI_Scatterv(X, sendcounts, displs, MPI_DOUBLE, rec_buffx, sendcounts[rank], MPI_DOUBLE, 0, MPI_COMM_WORLD);
 		MPI_Scatterv(Y, sendcounts, displs, MPI_DOUBLE, rec_buffy, sendcounts[rank], MPI_DOUBLE, 0, MPI_COMM_WORLD);
-		
-		//MPI_Scatter(X, sendcount, MPI_DOUBLE, rec_buffx, sendcount, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-		//MPI_Scatter(Y, sendcount, MPI_DOUBLE, rec_buffy, sendcount, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-	   /*if(rank == 2)
-		{
-			//printf("SENDC2 = %d  \n ",sendcounts[2] );
-			for(int i = 0; i < sendcounts[2]; i++)
-			{
-			//printf(" int i :  %d  ,   rec_buffx  : %.20lf  \n " , i , rec_buffx[i] );
-			}
-		}*/
+	
 				//------------------mean-----------------------------//
 		local_meanX = mean_func( rec_buffx , sendcounts[rank]);
 		local_meanY = mean_func( rec_buffy , sendcounts[rank]);
@@ -240,10 +222,7 @@ int main(int argc, char *argv[])
 	   local_pXY = pxy_func(rec_buffx, rec_buffy, sendcounts[rank], global_meanX, global_meanY);
 	   MPI_Reduce(&local_pXY,&global_pXY,1,MPI_DOUBLE,MPI_SUM,0,MPI_COMM_WORLD);
 	   
-		
-	//	printf("this is globalsd sum :  %lf , at rank %d , \n" , global_sdX, rank  );
-		//printf("this is globalsY sum :  %lf , at rank %d , \n " , global_sdY, rank  );
-		
+	
 		
 
 	}
@@ -257,26 +236,11 @@ int main(int argc, char *argv[])
 	if(rank==0)
 	{
 		
-	//MPI_Reduce(&local_sdY,&global_sdY,1,MPI_DOUBLE,MPI_SUM,0,MPI_COMM_WORLD);
-	//MPI_Reduce(&local_pXY,&global_pXY,1,MPI_DOUBLE,MPI_SUM,0,MPI_COMM_WORLD);
-		
-            
-	   	
+	
 	   
 	    global_pXY = global_pXY/sqrt(global_sdX*global_sdY);
 	   finish = MPI_Wtime();
-	  // printf("this is the time %.10f \n ", finish-start);
-
-	  // printf("this is global sum :  %.10lf , at rank %d , for SIZE %d , and number of processes %d \n" ,global_pXY , rank , SIZE, numtasks );
-
-		
-		//File *infile;
-		  //char filename[100];
-		 //sprintf(filename,"p_res",numtasks,SIZE,finish-start);
-	     // infile = fopen(filename, "a");
-
-		 
-		 //sprintf(line, " -----------N------------SIZE---------------TIME");
+	 
 		 FILE *infile;
 		 
 		 infile = fopen("p_res.dat","a");
